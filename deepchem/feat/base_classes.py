@@ -6,7 +6,148 @@ import types
 import numpy as np
 import multiprocessing
 import logging
+
 logger = logging.getLogger(__name__)
+
+class Featurizer(object):
+  """
+  Abstract class for calculating a set of features for a
+  datapoint.
+
+  This class is abstract and cannot be invoked directly. You'll
+  likely only interact with this class if you're a developer. In
+  that case, you might want to make a child class which
+  implements the _featurize method for calculating features for
+  a single datapoints if you'd like to make a featurizer for a
+  new datatype.
+  """
+
+  def featurize(self, datapoints, log_every_n=1000):
+    """
+    Calculate features for datapoints.
+
+    Parameters
+    ----------
+    datapoints: object 
+       Any blob of data you like. Subclasss should instantiate
+       this. 
+    """
+    raise NotImplementedError 
+
+  def __call__(self, datapoints):
+    """
+    Calculate features for datapoints.
+
+    Parameters
+    ----------
+    datapoints: object 
+       Any blob of data you like. Subclasss should instantiate
+       this. 
+    """
+    return self.featurize(datapoints)
+
+class MolecularFeaturizer(object):
+  """
+  Abstract class for calculating a set of features for a
+  molecule.
+
+  Child classes implement the _featurize method for calculating
+  features for a single molecule.
+  """
+
+  def featurize(self, mols, log_every_n=1000):
+    """
+    Calculate features for molecules.
+
+    Parameters
+    ----------
+    mols : iterable
+        RDKit Mol objects.
+    """
+    mols = list(mols)
+    features = []
+    for i, mol in enumerate(mols):
+      if mol is not None:
+        features.append(self._featurize(mol))
+      else:
+        features.append(np.array([]))
+
+    features = np.asarray(features)
+    return features
+
+  def _featurize(self, mol):
+    """
+    Calculate features for a single molecule.
+
+    Parameters
+    ----------
+    mol : RDKit Mol
+        Molecule.
+    """
+    raise NotImplementedError('Featurizer is not defined.')
+
+  def __call__(self, mols):
+    """
+    Calculate features for molecules.
+
+    Parameters
+    ----------
+    mols : iterable
+        RDKit Mol objects.
+    """
+    return self.featurize(mols)
+
+
+class ReactionFeaturizer(object):
+  """
+  Abstract class for calculating a set of features for a
+  reaction.
+
+  Child classes implement the _featurize method for calculating
+  features for a single reaction.
+  """
+
+  def featurize(self, rxns, log_every_n=1000):
+    """
+    Calculate features for reactions.
+
+    Parameters
+    ----------
+    rxns: iterable
+      Contains reactions in some representation. 
+    """
+    rxns = list(rxns)
+    features = []
+    for i, rxn in enumerate(rxns):
+      if rxn is not None:
+        features.append(self._featurize(rxn))
+      else:
+        features.append(np.array([]))
+
+    features = np.asarray(features)
+    return features
+
+  def _featurize(self, rxn):
+    """
+    Calculate features for a single reaction.
+
+    Parameters
+    ----------
+    rxn: Object 
+        Reaction as some object..
+    """
+    raise NotImplementedError('Featurizer is not defined.')
+
+  def __call__(self, rxns):
+    """
+    Calculate features for reactions.
+
+    Parameters
+    ----------
+    rxns: iterable
+        Contains reactions.
+    """
+    return self.featurize(rxns)
 
 def _featurize_complex(featurizer, mol_pdb_file, protein_pdb_file, log_message):
   logging.info(log_message)
@@ -80,59 +221,6 @@ class ComplexFeaturizer(object):
       Should be a list of lines of the PDB file.
     """
     raise NotImplementedError('Featurizer is not defined.')
-
-
-class Featurizer(object):
-  """
-  Abstract class for calculating a set of features for a
-  molecule.
-
-  Child classes implement the _featurize method for calculating
-  features for a single molecule.
-  """
-
-  def featurize(self, mols, verbose=True, log_every_n=1000):
-    """
-    Calculate features for molecules.
-
-    Parameters
-    ----------
-    mols : iterable
-        RDKit Mol objects.
-    """
-    mols = list(mols)
-    features = []
-    for i, mol in enumerate(mols):
-      if mol is not None:
-        features.append(self._featurize(mol))
-      else:
-        features.append(np.array([]))
-
-    features = np.asarray(features)
-    return features
-
-  def _featurize(self, mol):
-    """
-    Calculate features for a single molecule.
-
-    Parameters
-    ----------
-    mol : RDKit Mol
-        Molecule.
-    """
-    raise NotImplementedError('Featurizer is not defined.')
-
-  def __call__(self, mols):
-    """
-    Calculate features for molecules.
-
-    Parameters
-    ----------
-    mols : iterable
-        RDKit Mol objects.
-    """
-    return self.featurize(mols)
-
 
 class UserDefinedFeaturizer(Featurizer):
   """Directs usage of user-computed featurizations."""

@@ -1,12 +1,16 @@
+"""
+Implements featurizations for GraphConv and Weave Models.
+"""
 import numpy as np
-
+import multiprocessing
+import logging
 import deepchem as dc
-from deepchem.feat import Featurizer
+from deepchem.feat import MolecularFeaturizer
 from deepchem.feat.atomic_coordinates import ComplexNeighborListFragmentAtomicCoordinates
 from deepchem.feat.mol_graphs import ConvMol, WeaveMol
 from deepchem.data import DiskDataset
-import multiprocessing
-import logging
+
+logger = logging.getLogger(__name__)
 
 
 def _featurize_complex(featurizer, mol_pdb_file, protein_pdb_file, log_message):
@@ -145,7 +149,9 @@ def atom_features(atom,
                   use_chirality=False):
   """Helper method used to compute per-atom feature vectors.
 
-  Many different featurization methods compute per-atom features such as ConvMolFeaturizer, WeaveFeaturizer. This method computes such features.
+  Many different featurization methods compute per-atom features
+  such as ConvMolFeaturizer, WeaveFeaturizer. This method
+  computes such features.
 
   Parameters
   ----------
@@ -334,7 +340,7 @@ def find_distance(a1, num_atoms, canon_adj_list, max_distance=7):
   return distance
 
 
-class ConvMolFeaturizer(Featurizer):
+class ConvMolFeaturizer(MolecularFeaturizer):
   """This class implements the featurization to implement graph convolutions from the Duvenaud graph convolution paper
 
 Duvenaud, David K., et al. "Convolutional networks on graphs for learning molecular fingerprints." Advances in neural information processing systems. 2015.
@@ -448,7 +454,7 @@ Duvenaud, David K., et al. "Convolutional networks on graphs for learning molecu
            tuple(self.atom_properties) == tuple(other.atom_properties)
 
 
-class WeaveFeaturizer(Featurizer):
+class WeaveFeaturizer(MolecularFeaturizer):
   """This class implements the featurization to implement Weave convolutions from the Google graph convolution paper.
 
   Kearnes, Steven, et al. "Molecular graph convolutions: moving beyond fingerprints." Journal of computer-aided molecular design 30.8 (2016): 595-608.

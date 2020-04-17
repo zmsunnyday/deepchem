@@ -1,7 +1,5 @@
 """
 Generate coulomb matrices for molecules.
-
-See Montavon et al., _New Journal of Physics_ __15__ (2013) 095003.
 """
 __author__ = "Steven Kearnes"
 __copyright__ = "Copyright 2014, Stanford University"
@@ -9,15 +7,20 @@ __license__ = "MIT"
 
 import numpy as np
 import deepchem as dc
-from deepchem.feat import Featurizer
+from deepchem.feat import MolecularFeaturizer
 from deepchem.utils import pad_array
 from deepchem.feat.atomic_coordinates import AtomicCoordinates
 
 
-class BPSymmetryFunctionInput(Featurizer):
+class BPSymmetryFunctionInput(MolecularFeaturizer):
   """
   Calculate Symmetry Function for each atom in the molecules
-  Methods described in https://journals.aps.org/prl/pdf/10.1103/PhysRevLett.98.146401
+  Methods were adapted from the following paper: 
+
+  Behler, Jörg, and Michele Parrinello. "Generalized
+  neural-network representation of high-dimensional
+  potential-energy surfaces." Physical review letters 98.14
+  (2007): 146401.
   """
 
   def __init__(self, max_atoms):
@@ -34,9 +37,14 @@ class BPSymmetryFunctionInput(Featurizer):
     return np.pad(features, ((0, self.max_atoms - n_atoms), (0, 0)), 'constant')
 
 
-class CoulombMatrix(Featurizer):
-  """
-  Calculate Coulomb matrices for molecules.
+class CoulombMatrix(MolecularFeaturizer):
+  """Calculate Coulomb matrices for molecules.
+
+  Methods were adapted from the following paper:
+
+  Montavon, Grégoire, et al. "Machine learning of molecular
+  electronic properties in chemical compound space." New Journal
+  of Physics 15.9 (2013): 095003.
 
   Parameters
   ----------

@@ -42,7 +42,7 @@ def get_input_type(input_file):
     raise ValueError("Unrecognized extension %s" % file_extension)
 
 
-def load_data(input_files, shard_size=None, verbose=True):
+def load_data(input_files, shard_size=None):
   """Loads data from disk.
 
   For CSV files, supports sharded loading for large files.
@@ -56,7 +56,7 @@ def load_data(input_files, shard_size=None, verbose=True):
     for value in load_sdf_files(input_files):
       yield value
   elif input_type == "csv":
-    for value in load_csv_files(input_files, shard_size, verbose=verbose):
+    for value in load_csv_files(input_files, shard_size):
       yield value
   elif input_type == "pandas-pickle":
     for input_file in input_files:
@@ -94,7 +94,7 @@ def load_sdf_files(input_files, clean_mols, tasks=[]):
   return dataframes
 
 
-def load_csv_files(filenames, shard_size=None, verbose=True):
+def load_csv_files(filenames, shard_size=None):
   """Load data as pandas dataframe."""
   # First line of user-specified CSV *must* be header.
   shard_num = 1

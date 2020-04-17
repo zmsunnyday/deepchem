@@ -807,31 +807,28 @@ def compute_hydrogen_bonds(protein_xyz, protein, ligand_xyz, ligand,
 def convert_atom_to_voxel(molecule_xyz,
                           atom_index,
                           box_width,
-                          voxel_width,
-                          verbose=False):
+                          voxel_width):
   """Converts atom coordinates to an i,j,k grid index.
 
-  Parameters
-  ----------
-  molecule_xyz: np.ndarray
-    Array with coordinates of all atoms in the molecule, shape (N, 3)
-  atom_index: int
-    Index of an atom
-  box_width: float
-    Size of a box
-  voxel_width: float
-    Size of a voxel
-  verbose: bool
-    Print warnings when atom is outside of a box
+  Parameters:
+  -----------
+    molecule_xyz: np.ndarray
+      Array with coordinates of all atoms in the molecule, shape (N, 3)
+    atom_index: int
+      Index of an atom
+    box_width: float
+      Size of a box
+    voxel_width: float
+      Size of a voxel
   """
 
   indices = np.floor(
       (molecule_xyz[atom_index] + box_width / 2.0) / voxel_width).astype(int)
   if ((indices < 0) | (indices >= box_width / voxel_width)).any():
-    if verbose:
-      warn('Coordinates are outside of the box (atom id = %s,'
-           ' coords xyz = %s, coords in box = %s' %
-           (atom_index, molecule_xyz[atom_index], indices))
+    logger.warning(
+         'Coordinates are outside of the box (atom id = %s,'
+         ' coords xyz = %s, coords in box = %s' %
+         (atom_index, molecule_xyz[atom_index], indices))
 
   return ([indices])
 
@@ -888,7 +885,6 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
                box_width=16.0,
                voxel_width=1.0,
                flatten=False,
-               verbose=True,
                sanitize=False,
                **kwargs):
     """
@@ -920,8 +916,6 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
     flatten: bool, optional (defaul False)
       Indicate whether calculated features should be flattened. Output is always
       flattened if flat features are specified in feature_types.
-    verbose: bool, optional (defaul True)
-      Verbolity for logging
     sanitize: bool, optional (defaul False)
       If set to True molecules will be sanitized. Note that calculating some
       features (e.g. aromatic interactions) require sanitized molecules.
@@ -956,13 +950,12 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
     not_implemented = ['sybyl']
 
     for arg in deprecated_args:
-      if arg in kwargs and verbose:
-        warn(
+      if arg in kwargs:
+        #TODO(rbharath): 1.4 is long gone... Figure out what to do here
+        logger.warning(
             '%s argument was removed and it is ignored,'
-            ' using it will result in error in version 1.4' % arg,
-            DeprecationWarning)
+            ' using it will result in error in version 1.4' % arg)
 
-    self.verbose = verbose
     self.sanitize = sanitize
     self.flatten = flatten
 
@@ -1027,21 +1020,17 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
     # parse provided feature types
     for feature_type in feature_types:
       if self.sanitize is False and feature_type in require_sanitized:
-        if self.verbose:
-          warn('sanitize is set to False, %s feature will be ignored' %
-               feature_type)
+        logger.warning('sanitize is set to False, %s feature will be ignored' % feature_type)
         continue
       if feature_type in not_implemented:
-        if self.verbose:
-          warn('%s feature is not implemented yet and will be ignored' %
-               feature_type)
+        logger.warning('%s feature is not implemented yet and will be ignored' %
+             feature_type)
         continue
 
       if feature_type in self.FLAT_FEATURES:
         self.feature_types.append((True, feature_type))
         if self.flatten is False:
-          if self.verbose:
-            warn('%s feature is used, output will be flattened' % feature_type)
+          logger.warning('%s feature is used, output will be flattened' % feature_type)
           self.flatten = True
 
       elif feature_type in self.VOXEL_FEATURES:
@@ -1052,8 +1041,7 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
                                for ftype in sorted(self.FLAT_FEATURES)
                                if ftype not in ignored_features]
         if self.flatten is False:
-          if self.verbose:
-            warn('Flat features are used, output will be flattened')
+          logger.warning('Flat features are used, output will be flattened')
           self.flatten = True
 
       elif feature_type == 'voxel_combined':
@@ -1068,11 +1056,10 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
                                for ftype in sorted(self.VOXEL_FEATURES)
                                if ftype not in ignored_features]
         if self.flatten is False:
-          if self.verbose:
-            warn('Flat feature are used, output will be flattened')
+          logger.warning('Flat feature are used, output will be flattened')
           self.flatten = True
-      elif self.verbose:
-        warn('Ignoring unknown feature %s' % feature_type)
+      else:
+        logger.warning('Ignoring unknown feature %s' % feature_type)
 
   def _compute_feature(self, feature_name, prot_xyz, prot_rdk, lig_xyz, lig_rdk,
                        distances):

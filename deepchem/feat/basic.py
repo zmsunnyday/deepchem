@@ -5,10 +5,10 @@ __author__ = "Steven Kearnes"
 __copyright__ = "Copyright 2014, Stanford University"
 __license__ = "MIT"
 
-from deepchem.feat import Featurizer
+from deepchem.feat import MolecularFeaturizer
 
 
-class MolecularWeight(Featurizer):
+class MolecularWeight(MolecularFeaturizer):
   """
   Molecular weight.
   """
@@ -29,7 +29,7 @@ class MolecularWeight(Featurizer):
     return wt
 
 
-class RDKitDescriptors(Featurizer):
+class RDKitDescriptors(MolecularFeaturizer):
   """
   RDKit descriptors.
 

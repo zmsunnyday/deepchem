@@ -1,5 +1,11 @@
+"""
+Implements a simple one hot encoder for text models.
+"""
 import numpy as np
-from deepchem.feat import Featurizer
+import logging
+from deepchem.feat import MolecularFeaturizer
+
+logger = logging.getLogger(__name__)
 
 zinc_charset = [
     ' ', '#', ')', '(', '+', '-', '/', '1', '3', '2', '5', '4', '7', '6', '8',
@@ -8,9 +14,10 @@ zinc_charset = [
 ]
 
 
-class OneHotFeaturizer(Featurizer):
-  """
-  NOTE(LESWING) Not Thread Safe in initialization of charset
+class OneHotFeaturizer(MolecularFeaturizer):
+  """Encodes SMILES strings as one-hot character arrays.
+
+  NOTE(LESWING):Not Thread Safe in initialization of charset
   """
 
   def __init__(self, charset=None, padlength=120):
@@ -25,14 +32,12 @@ class OneHotFeaturizer(Featurizer):
     self.charset = charset
     self.pad_length = padlength
 
-  def featurize(self, mols, verbose=True, log_every_n=1000):
+  def featurize(self, mols, log_every_n=1000):
     """
     Parameters
     ----------
     mols: obj
       List of rdkit Molecule Objects
-    verbose: bool
-      How much logging
     log_every_n:
       How often to log
     Returns

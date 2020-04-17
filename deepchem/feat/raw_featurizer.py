@@ -1,9 +1,15 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
-from deepchem.feat import Featurizer
+"""
+Encodes smiles/smarts as RDKIT objects directly.
+"""
+
+import logging
+from deepchem.feat import MolecularFeaturizer
+from deepchem.feat import ReactionFeaturizer
+
+logger = logging.getLogger(__name__)
 
 
-class RawFeaturizer(Featurizer):
+class RawFeaturizer(MolecularFeaturizer):
 
   def __init__(self, smiles=False):
     self.smiles = smiles
@@ -15,10 +21,12 @@ class RawFeaturizer(Featurizer):
     else:
       return mol
 
-class RawReactionFeaturizer(Featurizer):
+class RawReactionFeaturizer(ReactionFeaturizer):
   """Featurize SMARTS as RDKit Reaction objects.
 
-  This featurizer uses RDKit's `rdkit.Chem.rdChemReactions.ReactionFromSmarts` to parse in input SMARTS strings.
+  This featurizer uses RDKit's
+  `rdkit.Chem.rdChemReactions.ReactionFromSmarts` to parse in
+  input SMARTS strings which encode reactions.
   """
 
   def __init__(self, smarts=True):
