@@ -5,10 +5,8 @@ import logging
 import types
 import numpy as np
 import multiprocessing
-###################################################
 import logging
-logging.basicConfig(level=logging.DEBUG)
-###################################################
+logger = logging.getLogger(__name__)
 
 def _featurize_complex(featurizer, mol_pdb_file, protein_pdb_file, log_message):
   logging.info(log_message)
@@ -86,10 +84,11 @@ class ComplexFeaturizer(object):
 
 class Featurizer(object):
   """
-  Abstract class for calculating a set of features for a molecule.
+  Abstract class for calculating a set of features for a
+  molecule.
 
-  Child classes implement the _featurize method for calculating features
-  for a single molecule.
+  Child classes implement the _featurize method for calculating
+  features for a single molecule.
   """
 
   def featurize(self, mols, verbose=True, log_every_n=1000):
@@ -141,3 +140,17 @@ class UserDefinedFeaturizer(Featurizer):
   def __init__(self, feature_fields):
     """Creates user-defined-featurizer."""
     self.feature_fields = feature_fields
+
+class ReactionFeaturizer(Featurizer):
+  """Abstract class that featurizes reactions."""
+
+  def _featurize(self, smarts):
+    """"
+    Calculate features for a single reaction.
+
+    Parameters
+    ----------
+    smarts: str
+      SMARTS string defining reaction.
+    """
+    raise NotImplementedError('Featurizer is not defined')

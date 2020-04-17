@@ -639,3 +639,48 @@ class ImageLoader(DataLoader):
       else:
         raise ValueError("Unsupported image filetype for %s" % image_file)
     return np.array(images)
+
+class MolecularComplexLoader(DataLoader):
+  """Handles Loading of Molecular Complex Data
+
+  This class provides conveniences to load and featurize
+  datasets of macromolecular complexes. The idea here is that
+  each "datapoint" is specified by one or more PDB/sdf files
+  which hold the 3D structures for the sample that you're
+  considering. This loader will load these complexes and
+  featurize them for you.
+
+  Featurizing macromolecular complex data can take a long time,
+  so for convenience, this class provides restart capabilities
+  which will restart a stopped featurization process for a
+  collection of complexes.
+  """
+
+  def __init__(self, data_dir=None):
+    """Initialize MolecularComplexLoader.
+
+    Parameters
+    ----------
+    data_dir: str, optional
+      Directory to use for saving intermediate featurizations
+      and the final produced dataset.
+    """
+    raise NotImplementedError
+
+  def featurize(self, input_files, labels=None, weights=None):
+    """Featurizes Macromolecular Complex Data.
+
+    Parameters
+    ----------
+    input_files: list
+      Each entry in this list should be the collection of all
+      files for a given complex. If only one file is present,
+      this is just a string for the filename. Otherwise, this
+      should be a list of the filenames for the constituent
+      files.
+    labels: optional
+      If provided, a numpy ndarray of image labels
+    weights: optional
+      If provided, a numpy ndarray of image weights
+    """
+    raise NotImplementedError

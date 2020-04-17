@@ -1,18 +1,15 @@
 """
 Atomic coordinate featurizer.
 """
-__author__ = "Joseph Gomes and Bharath Ramsundar"
-__copyright__ = "Copyright 2016, Stanford University"
-__license__ = "MIT"
-
 import logging
 import numpy as np
-from deepchem.utils.save import log
+import logging
 from deepchem.feat import Featurizer
 from deepchem.feat import ComplexFeaturizer
 from deepchem.utils import rdkit_util, pad_array
 from deepchem.utils.rdkit_util import MoleculeLoadException
 
+logger = logging.getLogger(__name__)
 
 class AtomicCoordinates(Featurizer):
   """

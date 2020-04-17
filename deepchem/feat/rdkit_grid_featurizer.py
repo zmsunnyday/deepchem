@@ -1,24 +1,25 @@
-__author__ = "Bharath Ramsundar, Evan Feinberg, and Karl Leswing"
-__copyright__ = "Copyright 2016, Stanford University"
-__license__ = "MIT"
-
+"""
+Computes physiochemical descriptors which summarize a 3D molecular complex.
+"""
 import logging
 import os
 import shutil
-from warnings import warn
 import time
 import tempfile
 import hashlib
 import multiprocessing
+import logging
 from collections import Counter
+from warnings import warn
 from deepchem.utils.rdkit_util import load_molecule
 from deepchem.utils.rdkit_util import MoleculeLoadException
-
 import numpy as np
 from scipy.spatial.distance import cdist
 from copy import deepcopy
 from deepchem.feat import ComplexFeaturizer
-from deepchem.utils.save import log
+
+logger = logging.getLogger(__name__)
+
 """
 TODO(LESWING) add sanitization with rdkit upgrade to 2017.*
 """
@@ -1241,8 +1242,7 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
           protein_pdb_file, calc_charges=True, sanitize=self.sanitize)
       ############################################################## TIMING
       time2 = time.time()
-      log("TIMING: Loading protein coordinates took %0.3f s" % (time2 - time1),
-          self.verbose)
+      logger.info("TIMING: Loading protein coordinates took %0.3f s" % (time2 - time1))
       ############################################################## TIMING
       ############################################################## TIMING
       time1 = time.time()
@@ -1251,8 +1251,7 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
           mol_pdb_file, calc_charges=True, sanitize=self.sanitize)
       ############################################################## TIMING
       time2 = time.time()
-      log("TIMING: Loading ligand coordinates took %0.3f s" % (time2 - time1),
-          self.verbose)
+      logger.info("TIMING: Loading ligand coordinates took %0.3f s" % (time2 - time1))
       ############################################################## TIMING
     except MoleculeLoadException:
       logging.warning("Some molecules cannot be loaded by Rdkit. Skipping")
@@ -1266,8 +1265,7 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
     protein_xyz = subtract_centroid(protein_xyz, centroid)
     ############################################################## TIMING
     time2 = time.time()
-    log("TIMING: Centroid processing took %0.3f s" % (time2 - time1),
-        self.verbose)
+    logger.info("TIMING: Centroid processing took %0.3f s" % (time2 - time1))
     ############################################################## TIMING
 
     pairwise_distances = compute_pairwise_distances(protein_xyz, ligand_xyz)
