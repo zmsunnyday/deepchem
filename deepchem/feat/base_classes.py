@@ -51,8 +51,15 @@ class MolecularFeaturizer(object):
   Abstract class for calculating a set of features for a
   molecule.
 
-  Child classes implement the _featurize method for calculating
-  features for a single molecule.
+
+  The defining feature of a `MolecularFeaturizer` is that it
+  uses SMILES strings and RDKIT molecule objecgs to represent
+  small molecules. All other featurizers which are subclasses of
+  this class should plan to process input which comes as smiles
+  strings or RDKIT molecules. 
+
+  Child classes need to implement the _featurize method for
+  calculating features for a single molecule.
   """
 
   def featurize(self, mols, log_every_n=1000):
@@ -62,12 +69,22 @@ class MolecularFeaturizer(object):
     Parameters
     ----------
     mols : iterable
-        RDKit Mol objects.
+        RDKit Mol or SMILES string.
     """
-    mols = list(mols)
+    from rdkit import Chem
+    from rdkit.Chem.rdchem import Mol
+    # Special case handling of single molecule
+    if isinstance(mols, str) or isinstance(mols, Mol):
+      mols = [mols]
+    else:
+      # Convert iterables to list
+      mols = list(mols)
     features = []
     for i, mol in enumerate(mols):
       if mol is not None:
+        if isinstance(mol, str):
+          # mol must be a SMILES string so parse
+          mol = Chem.MolFromSmiles(mol)
         features.append(self._featurize(mol))
       else:
         features.append(np.array([]))
@@ -81,8 +98,8 @@ class MolecularFeaturizer(object):
 
     Parameters
     ----------
-    mol : RDKit Mol
-        Molecule.
+    mol : Object 
+        Either a RDKit Mol or SMILES string.
     """
     raise NotImplementedError('Featurizer is not defined.')
 
@@ -93,7 +110,7 @@ class MolecularFeaturizer(object):
     Parameters
     ----------
     mols : iterable
-        RDKit Mol objects.
+        RDKit Mol or SMILES strings.
     """
     return self.featurize(mols)
 
@@ -155,8 +172,7 @@ def _featurize_complex(featurizer, mol_pdb_file, protein_pdb_file, log_message):
 
 
 class ComplexFeaturizer(object):
-  """"
-  Abstract class for calculating features for mol/protein complexes.
+  """"Abstract class for calculating features for mol/protein complexes.
   """
 
   def featurize_complexes(self, mol_files, protein_pdbs, parallelize=True):

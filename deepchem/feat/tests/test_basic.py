@@ -27,6 +27,10 @@ class TestMolecularWeight(unittest.TestCase):
     """
     assert np.allclose(self.engine([self.mol]), 180, atol=0.1)
 
+  def test_MW_on_smiles(self):
+    assert np.allclose(self.engine('CC(=O)OC1=CC=CC=C1C(=O)O'),
+                       180, atol=0.1)
+
 
 class TestRDKitDescriptors(unittest.TestCase):
   """
@@ -47,6 +51,16 @@ class TestRDKitDescriptors(unittest.TestCase):
     Test simple descriptors.
     """
     descriptors = self.engine([self.mol])
+    assert np.allclose(
+        descriptors[0, self.engine.descriptors.index('ExactMolWt')],
+        180,
+        atol=0.1)
+
+  def testRDKitDescriptorsOnSmiles(self):
+    """
+    Test invocation on raw smiles.
+    """
+    descriptors = self.engine('CC(=O)OC1=CC=CC=C1C(=O)O')
     assert np.allclose(
         descriptors[0, self.engine.descriptors.index('ExactMolWt')],
         180,
