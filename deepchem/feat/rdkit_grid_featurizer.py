@@ -69,6 +69,23 @@ def hash_ecfp_pair(ecfp_pair, power):
   ecfp_hash = int(digest, 16) % (2**power)
   return (ecfp_hash)
 
+def _vectorize(hash_function,
+               feature_dict=None,
+               feature_list=None,
+               channel_power=10):
+  """Helper function to vectorize a spatial description."""
+  feature_vector = np.zeros(2**channel_power)
+  if feature_dict is not None:
+    on_channels = [
+        hash_function(feature, channel_power)
+        for key, feature in feature_dict.items()
+    ]
+    feature_vector[on_channels] += 1
+  elif feature_list is not None:
+    feature_vector[0] += len(feature_list)
+
+  return feature_vector
+
 
 def compute_all_ecfp(mol, indices=None, degree=2):
   """Obtain molecular fragment for all atoms emanating outward to given degree.
@@ -288,14 +305,14 @@ def convert_atom_to_voxel(molecule_xyz,
 
   Parameters:
   -----------
-    molecule_xyz: np.ndarray
-      Array with coordinates of all atoms in the molecule, shape (N, 3)
-    atom_index: int
-      Index of an atom
-    box_width: float
-      Size of a box
-    voxel_width: float
-      Size of a voxel
+  molecule_xyz: np.ndarray
+    Array with coordinates of all atoms in the molecule, shape (N, 3)
+  atom_index: int
+    Index of an atom
+  box_width: float
+    Size of a box
+  voxel_width: float
+    Size of a voxel
   """
 
   indices = np.floor(
@@ -361,7 +378,7 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
                box_width=16.0,
                voxel_width=1.0,
                flatten=False,
-               sanitize=False,
+               sanitize=True,
                **kwargs):
     """
     Parameters
@@ -392,9 +409,10 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
     flatten: bool, optional (defaul False)
       Indicate whether calculated features should be flattened. Output is always
       flattened if flat features are specified in feature_types.
-    sanitize: bool, optional (defaul False)
-      If set to True molecules will be sanitized. Note that calculating some
-      features (e.g. aromatic interactions) require sanitized molecules.
+    sanitize: bool, optional (default True)
+      If set to True molecules will be sanitized. Note that
+      calculating some features (e.g. aromatic interactions)
+      require sanitized molecules.
     **kwargs: dict, optional
       Keyword arguments can be usaed to specify custom cutoffs and bins (see
       default values below).
@@ -413,11 +431,11 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
     cation_pi_angle_cutoff: 30.0
     """
 
-    # check if user tries to set removed arguments
-    deprecated_args = [
-        'box_x', 'box_y', 'box_z', 'save_intermediates', 'voxelize_features',
-        'parallel', 'voxel_feature_types'
-    ]
+    ## check if user tries to set removed arguments
+    #deprecated_args = [
+    #    'box_x', 'box_y', 'box_z', 'save_intermediates', 'voxelize_features',
+    #    'parallel', 'voxel_feature_types'
+    #]
 
     # list of features that require sanitized molecules
     require_sanitized = ['pi_stack', 'cation_pi', 'ecfp_ligand']
@@ -425,12 +443,12 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
     # not implemented featurization types
     not_implemented = ['sybyl']
 
-    for arg in deprecated_args:
-      if arg in kwargs:
-        #TODO(rbharath): 1.4 is long gone... Figure out what to do here
-        logger.warning(
-            '%s argument was removed and it is ignored,'
-            ' using it will result in error in version 1.4' % arg)
+    #for arg in deprecated_args:
+    #  if arg in kwargs:
+    #    #TODO(rbharath): 1.4 is long gone... Figure out what to do here
+    #    logger.warning(
+    #        '%s argument was removed and it is ignored,'
+    #        ' using it will result in error in version 1.4' % arg)
 
     self.sanitize = sanitize
     self.flatten = flatten
@@ -479,8 +497,9 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
     # each entry is a tuple (is_flat, feature_name)
     self.feature_types = []
 
-    # list of features that cannot be calculated with specified parameters
-    # this list is used to define <flat/voxel/all>_combined subset
+    # list of features that cannot be calculated with specified
+    # parameters this list is used to define
+    # <flat/voxel/all>_combined subset
     ignored_features = []
     if self.sanitize is False:
       ignored_features += require_sanitized
@@ -536,7 +555,7 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
       return [compute_ecfp_features(lig_rdk, self.ecfp_degree, self.ecfp_power)]
     if feature_name == 'ecfp_hashed':
       return [
-          self._vectorize(
+          _vectorize(
               hash_ecfp, feature_dict=ecfp_dict, channel_power=self.ecfp_power)
           for ecfp_dict in featurize_binding_pocket_ecfp(
               prot_xyz,
@@ -549,7 +568,7 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
       ]
     if feature_name == 'splif_hashed':
       return [
-          self._vectorize(
+          _vectorize(
               hash_ecfp_pair,
               feature_dict=splif_dict,
               channel_power=self.splif_power) for splif_dict in featurize_splif(
@@ -558,7 +577,7 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
       ]
     if feature_name == 'hbond_count':
       return [
-          self._vectorize(
+          _vectorize(
               hash_ecfp_pair, feature_list=hbond_list, channel_power=0)
           for hbond_list in compute_hydrogen_bonds(
               prot_xyz, prot_rdk, lig_xyz, lig_rdk, distances, self.cutoffs[
@@ -845,19 +864,3 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
         nb_channel=1)
     return [pi_parallel_tensor, pi_t_tensor]
 
-  def _vectorize(self,
-                 hash_function,
-                 feature_dict=None,
-                 feature_list=None,
-                 channel_power=10):
-    feature_vector = np.zeros(2**channel_power)
-    if feature_dict is not None:
-      on_channels = [
-          hash_function(feature, channel_power)
-          for key, feature in feature_dict.items()
-      ]
-      feature_vector[on_channels] += 1
-    elif feature_list is not None:
-      feature_vector[0] += len(feature_list)
-
-    return feature_vector
