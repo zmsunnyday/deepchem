@@ -22,6 +22,8 @@ from deepchem.feat.grid_featurizers import ChargeVoxelizer
 from deepchem.feat.grid_featurizers import SaltBridgeVoxelizer
 from deepchem.feat.grid_featurizers import CationPiVoxelizer
 from deepchem.feat.grid_featurizers import PiStackVoxelizer
+from deepchem.feat.grid_featurizers import HydrogenBondVoxelizer
+from deepchem.utils.rdkit_util import compute_hydrogen_bonds
 from deepchem.utils.rdkit_util import load_molecule
 from deepchem.utils.rdkit_util import compute_centroid
 from deepchem.utils.rdkit_util import subtract_centroid
@@ -62,43 +64,6 @@ VOXEL_FEATURES = [
     'hbond', 'pi_stack', 'cation_pi'
 ]
 
-def compute_hbonds_in_range(protein, protein_xyz, ligand, ligand_xyz,
-                            pairwise_distances, hbond_dist_bin,
-                            hbond_angle_cutoff):
-  """
-  Find all pairs of (protein_index_i, ligand_index_j) that hydrogen bond given
-  a distance bin and an angle cutoff.
-  """
-
-  contacts = np.nonzero((pairwise_distances > hbond_dist_bin[0]) &
-                        (pairwise_distances < hbond_dist_bin[1]))
-  contacts = zip(contacts[0], contacts[1])
-  hydrogen_bond_contacts = []
-  for contact in contacts:
-    if is_hydrogen_bond(protein_xyz, protein, ligand_xyz, ligand, contact,
-                        hbond_angle_cutoff):
-      hydrogen_bond_contacts.append(contact)
-  return hydrogen_bond_contacts
-
-
-def compute_hydrogen_bonds(protein_xyz, protein, ligand_xyz, ligand,
-                           pairwise_distances, hbond_dist_bins,
-                           hbond_angle_cutoffs):
-  """Computes hydrogen bonds between proteins and ligands.
-
-  Returns a list of sublists. Each sublist is a series of tuples of
-  (protein_index_i, ligand_index_j) that represent a hydrogen bond. Each sublist
-  represents a different type of hydrogen bond.
-  """
-
-  hbond_contacts = []
-  for i, hbond_dist_bin in enumerate(hbond_dist_bins):
-    hbond_angle_cutoff = hbond_angle_cutoffs[i]
-    hbond_contacts.append(
-        compute_hbonds_in_range(protein, protein_xyz, ligand, ligand_xyz,
-                                pairwise_distances, hbond_dist_bin,
-                                hbond_angle_cutoff))
-  return (hbond_contacts)
 
 class RdkitGridFeaturizer(ComplexFeaturizer):
   """Featurizes protein-ligand complex using flat features or a 3D grid (in which
@@ -165,6 +130,8 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
     pi_stack_angle_cutoff: 30.0
     cation_pi_dist_cutoff: 6.5
     cation_pi_angle_cutoff: 30.0
+    hbond_dist_cutoff: 4.0
+    hbond_angle_cutoff: 40.0
     """
 
     # list of features that require sanitized molecules
@@ -188,6 +155,8 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
         'pi_stack_angle_cutoff': 30.0,
         'cation_pi_dist_cutoff': 6.5,
         'cation_pi_angle_cutoff': 30.0,
+        'hbond_dist_cutoff': 4.0,
+        'hbond_angle_cutoff': 40.0
     }
 
     # update with cutoffs specified by the user
@@ -212,7 +181,6 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
     ignored_features = []
     if self.sanitize is False:
       ignored_features += require_sanitized
-    #ignored_features += not_implemented
 
     # Intantiate Featurizers
     self.ecfp_featurizer = CircularFingerprint(
@@ -244,6 +212,10 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
     self.pi_stack_voxelizer = PiStackVoxelizer(
         distance_cutoff=self.cutoffs['pi_stack_dist_cutoff'],
         angle_cutoff=self.cutoffs['pi_stack_angle_cutoff'],
+        box_width=self.box_width, voxel_width=self.voxel_width)
+    self.hbond_voxelizer = HydrogenBondVoxelizer(
+        distance_cutoff=self.cutoffs['hbond_dist_cutoff'],
+        angle_cutoff=self.cutoffs['hbond_angle_cutoff'],
         box_width=self.box_width, voxel_width=self.voxel_width)
 
     # parse provided feature types
