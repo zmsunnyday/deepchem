@@ -25,7 +25,20 @@ def save_to_disk(dataset, filename, compress=3):
     raise ValueError("Filename with unsupported extension: %s" % filename)
 
 def get_input_type(input_file):
-  """Get type of input file. Must be csv/pkl.gz/sdf file."""
+  """Get type of input file. Must be csv/pkl.gz/sdf file.
+
+  Will automatically remove ".gz" when looking at filetype.
+  Will raise `ValueError` for unnrecognized filetypes.
+
+  Parameters
+  ----------
+  input_file: str
+    Filename to check
+
+  Returns
+  -------
+  A string with the filetype. Possible values are "csv", "pandas-pickle", "pandas-joblib", "sdf".
+  """
   filename, file_extension = os.path.splitext(input_file)
   # If gzipped, need to compute extension again
   if file_extension == ".gz":
@@ -64,7 +77,22 @@ def load_data(input_files, shard_size=None):
 
 
 def load_sdf_files(input_files, clean_mols, tasks=[]):
-  """Load SDF file into dataframe."""
+  """Load SDF file into dataframe.
+
+  Parameters
+  ----------
+  input_files: list[str]
+    List of filenames for SDF files
+  clean_mols: bool
+    If True, sanitize molecules
+  tasks: list[str], optional
+    Task names.
+
+  Returns
+  -------
+  Returns a pandas dataframe with columns mol_id, smiles, mol,
+  task[0], ..., task[-1]
+  """
   from rdkit import Chem
   dataframes = []
   for input_file in input_files:
@@ -86,16 +114,27 @@ def load_sdf_files(input_files, clean_mols, tasks=[]):
     if has_csv:
       mol_df = pd.DataFrame(df_rows, columns=('mol_id', 'smiles', 'mol'))
       raw_df = next(load_csv_files([input_file + ".csv"], shard_size=None))
-      dataframes.append(pd.concat([mol_df, raw_df], axis=1, join='inner'))
+      #dataframes.append(pd.concat([mol_df, raw_df], axis=1, join='inner'))
+      yield pd.concat([mol_df, raw_df], axis=1, join='inner')
     else:
       mol_df = pd.DataFrame(
           df_rows, columns=('mol_id', 'smiles', 'mol') + tuple(tasks))
-      dataframes.append(mol_df)
-  return dataframes
+      #dataframes.append(mol_df)
+      yield mol_df
+  #return dataframes
 
 
 def load_csv_files(filenames, shard_size=None):
-  """Load data as pandas dataframe."""
+  """Load data as pandas dataframe.
+  
+  Parameters
+  ----------
+  filenames: list[str]
+    Filenames of CSV files to load.
+  shard_size: int, optional
+    If set, read `shard_size` rows at a time. Otherwise, yield
+    a full CSV file at at time.
+  """
   # First line of user-specified CSV *must* be header.
   shard_num = 1
   for filename in filenames:
@@ -183,8 +222,8 @@ def encode_bio_sequence(fname, file_type="fasta", letters="ATCGN"):
 
 
 def save_metadata(tasks, metadata_df, data_dir):
-  """
-  Saves the metadata for a DiskDataset
+  """Saves the metadata for a DiskDataset
+
   Parameters
   ----------
   tasks: list of str
@@ -192,6 +231,7 @@ def save_metadata(tasks, metadata_df, data_dir):
   metadata_df: pd.DataFrame
   data_dir: str
     Directory to store metadata
+
   Returns
   -------
   """
