@@ -166,25 +166,26 @@ class ReactionFeaturizer(object):
     """
     return self.featurize(rxns)
 
-def _featurize_complex(featurizer, mol_pdb_file, protein_pdb_file, log_message):
-  logging.info(log_message)
-  return featurizer._featurize_complex(mol_pdb_file, protein_pdb_file)
+def _featurize_complex(featurizer, molecular_complex):
+  return featurizer._featurize_complex(molecular_complex)
 
 
 class ComplexFeaturizer(object):
   """"Abstract class for calculating features for mol/protein complexes.
   """
 
-  def featurize_complexes(self, mol_files, protein_pdbs, parallelize=True):
+  def featurize_complexes(self, molecular_complexes, parallelize=True):
     """
     Calculate features for mol/protein complexes.
 
     Parameters
     ----------
-    mols: list
-      List of PDB filenames for molecules.
-    protein_pdbs: list
-      List of PDB filenames for proteins.
+    molecular_complexes: list
+      Each entry in this list should be one or more files that contain
+      molecular complexes. If a single file, then just a string with
+      filename. If multiple files, then a tuple. 
+      TODO(rbharath): In principle ordering shouldn't be important,
+      but this needs to be tested more.
     parallelize: bool
       Use multiprocessing to parallelize
 
@@ -198,18 +199,17 @@ class ComplexFeaturizer(object):
     if parallelize:
       pool = multiprocessing.Pool()
       results = []
-      for i, (mol_file, protein_pdb) in enumerate(zip(mol_files, protein_pdbs)):
-        log_message = "Featurizing %d / %d" % (i, len(mol_files))
+      for i, mol_complex in enumerate(molecular_complexes):
+        logger.info("Featurizing %d / %d" % (i, len(molecular_complexes)))
         results.append(
-            pool.apply_async(_featurize_complex,
-                             (self, mol_file, protein_pdb, log_message)))
+            pool.apply_async(_featurize_complex, (self, mol_complex)))
       pool.close()
     else:
       results = []
-      for i, (mol_file, protein_pdb) in enumerate(zip(mol_files, protein_pdbs)):
-        log_message = "Featurizing %d / %d" % (i, len(mol_files))
+      for i, mol_complex in enumerate(molecular_complexes):
+        logger.info("Featurizing %d / %d" % (i, len(molecular_complexes)))
         results.append(
-            _featurize_complex(self, mol_file, protein_pdb, log_message))
+            _featurize_complex(self, mol_complex))
     features = []
     failures = []
     for ind, result in enumerate(results):
@@ -225,16 +225,14 @@ class ComplexFeaturizer(object):
     features = np.asarray(features)
     return features, failures
 
-  def _featurize_complex(self, mol_pdb, complex_pdb):
+  def _featurize_complex(self, mol_complex):
     """
     Calculate features for single mol/protein complex.
 
     Parameters
     ----------
-    mol_pdb: list
-      Should be a list of lines of the PDB file.
-    complex_pdb: list
-      Should be a list of lines of the PDB file.
+    mol_complex: Object
+      Should be some representation of a molecular complex.
     """
     raise NotImplementedError('Featurizer is not defined.')
 
