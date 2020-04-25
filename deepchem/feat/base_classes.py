@@ -1,11 +1,13 @@
 """
 Feature calculations.
 """
+import os
 import logging
 import types
 import numpy as np
 import multiprocessing
 import logging
+from deepchem.utils import rdkit_util
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +71,8 @@ class MolecularFeaturizer(object):
     Parameters
     ----------
     mols : iterable
-        RDKit Mol or SMILES string.
+        RDKit Mol, or SMILES string, or filename for
+        mol2/sdf/pdb/pdbqt file.
     """
     from rdkit import Chem
     from rdkit.Chem.rdchem import Mol
@@ -83,8 +86,12 @@ class MolecularFeaturizer(object):
     for i, mol in enumerate(mols):
       if mol is not None:
         if isinstance(mol, str):
-          # mol must be a SMILES string so parse
-          mol = Chem.MolFromSmiles(mol)
+          # Check if filename
+          if os.path.exists(mol):
+            _, mol = rdkit_util.load_molecule(mol)
+          else:
+            # mol must be a SMILES string so parse
+            mol = Chem.MolFromSmiles(mol)
         features.append(self._featurize(mol))
       else:
         features.append(np.array([]))
