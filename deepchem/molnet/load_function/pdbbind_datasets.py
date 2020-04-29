@@ -555,7 +555,8 @@ def load_pdbbind(reload=True,
   subset: Str
     Specifies which subset of PDBBind, only "core" or "refined" for now.
   featurizer: Str
-    Either "grid" or "atomic" for grid and atomic featurizations.
+    Either "grid" or "atomic" for grid and atomic featurizations. Or
+    can be featurizer object. Must inherit from `ComplexFeaturizer`.
   split: Str
     Either "random" or "index".
   split_seed: Int, optional
@@ -576,14 +577,21 @@ def load_pdbbind(reload=True,
     data_dir = DEFAULT_DIR
   data_folder = os.path.join(data_dir, "pdbbind", "v2015")
 
+  if isinstance(featurizer, str):
+    featurizer_name = featurizer
+  elif isinstance(featurizer, deepchem.feat.ComplexFeaturizer):
+    # This isn't ideal. We should have featurizer parameters set in
+    # the name.
+    featurizer_name = featurizer.__class__.__name__
+
   if save_dir == None:
     save_dir = os.path.join(DEFAULT_DIR, "from-pdbbind")
   if load_binding_pocket:
     save_folder = os.path.join(
-        save_dir, "protein_pocket-%s-%s-%s" % (subset, featurizer, split))
+        save_dir, "protein_pocket-%s-%s-%s" % (subset, featurizer_name, split))
   else:
     save_folder = os.path.join(
-        save_dir, "full_protein-%s-%s-%s" % (subset, featurizer, split))
+        save_dir, "full_protein-%s-%s-%s" % (subset, featurizer_name, split))
 
   if save_timestamp:
     save_folder = "%s-%s-%s" % (save_folder,
@@ -640,6 +648,9 @@ def load_pdbbind(reload=True,
   ligand_files = [
       os.path.join(data_folder, pdb, "%s_ligand.sdf" % pdb) for pdb in pdbs
   ]
+  ########################################################
+  complex_files = get_pdbbind_molecular_complex_files(subset=subset, version="v2015", interactions="protein-ligand", load_binding_pocket=False)
+  ########################################################
 
   # Extract labels
   with open(index_labels_file, "r") as g:
@@ -679,6 +690,8 @@ def load_pdbbind(reload=True,
           complex_num_atoms=complex_num_atoms,
           max_num_neighbors=max_num_neighbors,
           neighbor_cutoff=neighbor_cutoff)
+  elif isinstance(featurizer, deepchem.feat.ComplexFeaturizer):
+    pass
   else:
     raise ValueError("Featurizer not supported")
 
@@ -687,7 +700,8 @@ def load_pdbbind(reload=True,
   ##########################################################
   features, failures = featurizer.featurize_complexes(
       #ligand_files, protein_files)
-      ligand_files, protein_files, parallelize=False)
+      #ligand_files, protein_files, parallelize=False)
+      complex_files, parallelize=False)
   ##########################################################
   feat_t2 = time.time()
   logger.info("\nFeaturization finished, took %0.3f s." % (feat_t2 - feat_t1))
@@ -711,11 +725,11 @@ def load_pdbbind(reload=True,
   # TODO(rbharath): This should be modified to contain a cluster split so
   # structures of the same protein aren't in both train/test
   splitters = {
-      'index': deepchem.splits.IndexSplitter(),
-      'random': deepchem.splits.RandomSplitter(),
+      'index': deepchem.splits.IndexSplitter(seed=split_seed),
+      'random': deepchem.splits.RandomSplitter(seed=split_seed),
   }
   splitter = splitters[split]
-  train, valid, test = splitter.train_valid_test_split(dataset, seed=split_seed)
+  train, valid, test = splitter.train_valid_test_split(dataset)
 
   all_dataset = (train, valid, test)
   logger.info("\nSaving dataset to \"%s\" ..." % save_folder)
