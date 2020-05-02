@@ -13,36 +13,20 @@ class TestRdkitUtil(unittest.TestCase):
   def setUp(self):
     # TODO test more formats for ligand
     current_dir = os.path.dirname(os.path.realpath(__file__))
-<<<<<<< HEAD
-    self.protein_file = os.path.join(
-        current_dir, '../../feat/tests/3ws9_protein_fixer_rdkit.pdb')
-    self.ligand_file = os.path.join(current_dir,
-                                    '../../feat/tests/3ws9_ligand.sdf')
-
-  def test_load_complex(self):
-    complexes = rdkit_util.load_complex(
-        (self.protein_file, self.ligand_file),
-        add_hydrogens=False,
-        calc_charges=False)
-    assert len(complexes) == 2
-=======
     self.protein_file = os.path.join(current_dir,
                                      '../../feat/tests/3ws9_protein_fixer_rdkit.pdb')
     self.ligand_file = os.path.join(current_dir, '../../feat/tests/3ws9_ligand.sdf')
->>>>>>> Changes
+
+  def test_load_complex(self):
+    pass
 
   def test_load_molecule(self):
     # adding hydrogens and charges is tested in dc.utils
     from rdkit.Chem.AllChem import Mol
     for add_hydrogens in (True, False):
       for calc_charges in (True, False):
-<<<<<<< HEAD
-        mol_xyz, mol_rdk = rdkit_util.load_molecule(self.ligand_file,
-                                                    add_hydrogens, calc_charges)
-=======
         mol_xyz, mol_rdk = rdkit_util.load_molecule(
           self.ligand_file, add_hydrogens, calc_charges)
->>>>>>> Changes
         num_atoms = mol_rdk.GetNumAtoms()
         self.assertIsInstance(mol_xyz, np.ndarray)
         self.assertIsInstance(mol_rdk, Mol)
@@ -101,6 +85,9 @@ class TestRdkitUtil(unittest.TestCase):
         after_hydrogen_count += 1
     assert after_hydrogen_count >= original_hydrogen_count
 
+  def test_apply_pdbfixer(self):
+    pass
+
   def test_compute_charges(self):
     current_dir = os.path.dirname(os.path.realpath(__file__))
     ligand_file = os.path.join(current_dir, "../../dock/tests/1jld_ligand.sdf")
@@ -115,6 +102,12 @@ class TestRdkitUtil(unittest.TestCase):
       if value != 0:
         has_a_charge = True
     assert has_a_charge
+
+  def test_protein_to_pdbqt(self):
+    pass
+
+  def test_convert_mol_to_pdbqrt(self):
+    pass
 
   def test_rotate_molecules(self):
     # check if distances do not change
