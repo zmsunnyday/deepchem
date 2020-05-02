@@ -41,8 +41,6 @@ logger = logging.getLogger(__name__)
 http://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python
 """
 
-# TODO(rbharath): Consider this comment on rdkit forums https://github.com/rdkit/rdkit/issues/1590 about sybyl featurization
-
 FLAT_FEATURES = [
     'ecfp_ligand', 'ecfp_hashed', 'splif_hashed', 'hbond_count'
 ]
@@ -306,25 +304,18 @@ class RdkitGridFeaturizer(ComplexFeaturizer):
 
       fragments = rdkit_util.load_complex(molecular_complex, add_hydrogens=False)
 
-      #protein_xyz, protein_rdk = load_molecule(
-      #    protein_pdb_file, calc_charges=True, sanitize=self.sanitize)
       time2 = time.time()
       logger.info("TIMING: Loading molecular complex coordinates took %0.3f s" % (time2 - time1))
-      #time1 = time.time()
-      #ligand_xyz, ligand_rdk = load_molecule(
-      #    mol_pdb_file, calc_charges=True, sanitize=self.sanitize)
-      #time2 = time.time()
-      #logger.info("TIMING: Loading ligand coordinates took %0.3f s" % (time2 - time1))
     except MoleculeLoadException:
       logging.warning("Some molecules cannot be loaded by Rdkit. Skipping")
       return None
 
-    time1 = time.time()
-    centroid = compute_centroid(ligand_xyz)
-    ligand_xyz = subtract_centroid(ligand_xyz, centroid)
-    protein_xyz = subtract_centroid(protein_xyz, centroid)
-    time2 = time.time()
-    logger.info("TIMING: Centroid processing took %0.3f s" % (time2 - time1))
+    #time1 = time.time()
+    #centroid = compute_centroid(ligand_xyz)
+    #ligand_xyz = subtract_centroid(ligand_xyz, centroid)
+    #protein_xyz = subtract_centroid(protein_xyz, centroid)
+    #time2 = time.time()
+    #logger.info("TIMING: Centroid processing took %0.3f s" % (time2 - time1))
 
     pairwise_distances = compute_pairwise_distances(protein_xyz, ligand_xyz)
 
