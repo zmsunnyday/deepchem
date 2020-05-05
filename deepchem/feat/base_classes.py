@@ -33,6 +33,11 @@ class Featurizer(object):
     datapoints: object 
        Any blob of data you like. Subclasss should instantiate
        this. 
+
+    Returns
+    -------
+    A numpy array containing a featurized representation of
+    `datapoints`.
     """
     raise NotImplementedError 
 
@@ -73,6 +78,11 @@ class MolecularFeaturizer(object):
     mols : iterable
         RDKit Mol, or SMILES string, or filename for
         mol2/sdf/pdb/pdbqt file.
+
+    Returns
+    -------
+    A numpy array containing a featurized representation of
+    `datapoints`.
     """
     from rdkit import Chem
     from rdkit.Chem.rdchem import Mol
@@ -191,8 +201,6 @@ class ComplexFeaturizer(object):
       Each entry in this list should be one or more files that contain
       molecular complexes. If a single file, then just a string with
       filename. If multiple files, then a tuple. 
-      TODO(rbharath): In principle ordering shouldn't be important,
-      but this needs to be tested more.
     parallelize: bool
       Use multiprocessing to parallelize
 
